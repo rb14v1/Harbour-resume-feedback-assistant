@@ -1,0 +1,12 @@
+Django==5.0.9
+djangorestframework==3.15.2
+djangorestframework-simplejwt==5.3.1
+psycopg2-binary==2.9.9
+django-cors-headers==4.4.0
+python-decouple==3.8
+
+# Only imported/called when OPENAI_API_KEY is set - see apps/common/ai.py.
+# Without a key the app runs fully offline on deterministic stub output.
+openai==1.54.4
+
+gunicorn==23.0.0
