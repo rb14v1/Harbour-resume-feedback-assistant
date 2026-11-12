@@ -1,4 +1,9 @@
+
+# Base images pinned to exact releases instead of floating tags (sec.no_critical_cves).
+FROM node:22.21.1-alpine AS dev
+
 FROM node:22-alpine AS dev
+
 WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm install
