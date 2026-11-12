@@ -1,7 +1,9 @@
-# Django 5.2 is the supported LTS line; ~= picks up the newest 5.2.x security release.
-Django~=5.2.8
-djangorestframework~=3.16.1
-djangorestframework-simplejwt==5.3.1
+# All direct dependencies are pinned to exact, patched versions (sec.no_critical_cves).
+# Django 5.2 is the supported LTS line; bump the pin for each 5.2.x security release.
+Django==5.2.9
+djangorestframework==3.16.1
+# 5.5.1 fixes CVE-2024-22513 (disabled users keep access with existing tokens).
+djangorestframework-simplejwt==5.5.1
 psycopg2-binary==2.9.9
 django-cors-headers==4.4.0
 python-decouple==3.8
