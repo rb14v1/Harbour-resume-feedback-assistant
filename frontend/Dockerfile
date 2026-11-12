@@ -1,21 +1,26 @@
+
 # Base images pinned to exact releases instead of floating tags (sec.no_critical_cves).
 FROM node:22.21.1-alpine AS dev
+
+FROM node:22-alpine AS dev
+
 WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm install
 COPY . .
+RUN chown -R node:node /app
+USER node
 EXPOSE 8080
 CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
 
-FROM node:22.21.1-alpine AS build
+FROM node:22-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm install
 COPY . .
 RUN npm run build
 
-FROM nginx:1.28.0-alpine AS prod
-RUN apk upgrade --no-cache
+FROM nginx:alpine AS prod
 COPY --from=build /app/dist /usr/share/nginx/html
 EXPOSE 8080
 
