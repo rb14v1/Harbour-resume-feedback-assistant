@@ -150,3 +150,18 @@ CORS_ALLOW_CREDENTIALS = True
 # ---------------------------------------------------------------------------
 OPENAI_CHAT_MODEL = config("OPENAI_CHAT_MODEL", default="gpt-5.4-mini")
 OPENAI_API_KEY = config("OPENAI_API_KEY", default="")
+
+# Where the OpenAI-compatible API lives. Empty means api.openai.com, which is
+# the stock client's own default and what this app used before.
+#
+# Set it to point the same client at an Azure OpenAI resource instead: Azure
+# serves an OpenAI-compatible surface at <resource-endpoint>/openai/v1/, which
+# the stock `openai` package accepts with the resource key as its api_key. No
+# separate AzureOpenAI client and no code branch is needed.
+#
+# A deployment platform that provisions Azure OpenAI fills this in for us -
+# OPENAI_BASE_URL is a name such platforms recognise and rewrite to their own
+# resource. Declared empty here so it is visibly part of this app's contract:
+# without it, a platform-supplied Azure key is sent to api.openai.com and is
+# rejected.
+OPENAI_BASE_URL = config("OPENAI_BASE_URL", default="")

@@ -175,22 +175,60 @@ def _stub_feedback(resume_text: str, job_description: str) -> dict:
     }
 
 
-def generate_resume_feedback(resume_text: str, job_description: str) -> dict:
+def _client():
+    """An OpenAI client pointed at whichever OpenAI-compatible endpoint is configured.
+
+    With OPENAI_BASE_URL unset this is the stock client talking to
+    api.openai.com, which is what this app did before. Set it to an Azure
+    OpenAI resource's `/openai/v1/` path and the same client with the same
+    key reaches Azure instead - Azure serves an OpenAI-compatible surface
+    there, so no AzureOpenAI client and no branching is needed.
+
+    The import lives here rather than at module scope so that a broken or
+    absent `openai` install is raised inside the caller's try block, not at
+    import time. See generate_resume_feedback for why that matters.
+    """
+    from openai import OpenAI
+
+    base_url = getattr(settings, "OPENAI_BASE_URL", "") or ""
+    # Passing base_url=None would override the library's own default with
+    # nothing, so an unset value is left out of the call entirely.
+    return OpenAI(
+        api_key=settings.OPENAI_API_KEY,
+        **({"base_url": base_url} if base_url else {}),
+    )
+
+
+def generate_resume_feedback(
+    resume_text: str,
+    job_description: str,
+    *,
+    allow_remote: bool = True,
+) -> dict:
     """Return {"feedback": str, "cover_letter_draft": str}.
 
-    Real path (OPENAI_API_KEY set): a single OpenAI chat-completions call
-    using OPENAI_CHAT_MODEL, prompted to return structured JSON. Defensively
-    parsed - never raises on a malformed response.
+    Real path (OPENAI_API_KEY set, allow_remote): a single OpenAI
+    chat-completions call using OPENAI_CHAT_MODEL, prompted to return
+    structured JSON. Defensively parsed - never raises on a malformed
+    response.
 
-    Stub path (no key, the default for local dev/tests): a deterministic,
-    template-based result derived only from the literal input text - see
-    module docstring. The same inputs always produce the same output.
+    Stub path (no key, allow_remote=False, or any failure on the real path):
+    a deterministic, template-based result derived only from the literal
+    input text - see module docstring. The same inputs always produce the
+    same output.
+
+    Pass allow_remote=False from any caller that must not depend on a
+    network service - the seed-data migration does, so that applying
+    migrations never reaches out to a model.
+
+    Client construction happens *inside* the try. It used to sit outside it,
+    so a dependency or configuration fault - as opposed to a call failure -
+    escaped this function instead of falling back to the stub, and took the
+    whole migration down with it.
     """
-    if settings.OPENAI_API_KEY:
-        from openai import OpenAI
-
-        client = OpenAI(api_key=settings.OPENAI_API_KEY)
+    if allow_remote and settings.OPENAI_API_KEY:
         try:
+            client = _client()
             response = client.chat.completions.create(
                 model=settings.OPENAI_CHAT_MODEL,
                 messages=_build_prompt(resume_text, job_description),

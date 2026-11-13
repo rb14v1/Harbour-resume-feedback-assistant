@@ -11,9 +11,18 @@
 #
 # This calls the real apps.common.ai.generate_resume_feedback() function
 # (not a hardcoded string) so the seeded feedback/cover-letters are exactly
-# what a fresh `manage.py migrate` run produces for anyone - at migrate time
-# there is no OPENAI_API_KEY configured, so this runs in the deterministic
-# stub path (see apps/common/ai.py).
+# what a fresh `manage.py migrate` run produces for anyone.
+#
+# It passes allow_remote=False, which forces the deterministic stub path
+# regardless of whether OPENAI_API_KEY is set. This migration originally
+# assumed no key would be present at migrate time; that assumption does not
+# hold when a deployment platform runs migrations as a job with the app's
+# full production environment attached. Under that environment the seed made
+# one live model call per application row - ten calls on every deploy, each
+# one able to fail the deploy, and each one billable. The seed rows are demo
+# data and do not need real model output, so it no longer asks for any.
+#
+# A model/network fault must never be able to fail a schema migration.
 from django.db import migrations
 
 DEMO_PASSWORD = "demo12345"
@@ -247,6 +256,7 @@ def seed_demo_data(apps, schema_editor):
         result = generate_resume_feedback(
             resume_text=application.resume_text,
             job_description=application.job_description,
+            allow_remote=False,
         )
         FeedbackResult.objects.create(
             job_application=application,
