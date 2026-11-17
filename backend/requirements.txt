@@ -1,6 +1,6 @@
 # All direct dependencies are pinned to exact, patched versions (sec.no_critical_cves).
 # Django 5.2 is the supported LTS line; bump the pin for each 5.2.x security release.
-Django==5.2.9
+Django==5.2.10
 djangorestframework==3.16.1
 # 5.5.1 fixes CVE-2024-22513 (disabled users keep access with existing tokens).
 djangorestframework-simplejwt==5.5.1
